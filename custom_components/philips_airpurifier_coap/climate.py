@@ -188,7 +188,7 @@ class PhilipsHeater(PhilipsGenericControlBase, ClimateEntity):
         """Return the current HVAC mode."""
         if not self.is_on:
             return HVACMode.OFF
-        if self.preset_mode == PresetMode.AUTO:
+        if self.preset_mode in (PresetMode.AUTO, PresetMode.AUTO_PLUS):
             return HVACMode.AUTO
         if self.preset_mode == PresetMode.VENTILATION:
             return HVACMode.FAN_ONLY
@@ -199,7 +199,9 @@ class PhilipsHeater(PhilipsGenericControlBase, ClimateEntity):
         if hvac_mode == HVACMode.OFF:
             await self.async_turn_off()
         elif hvac_mode == HVACMode.AUTO:
-            await self.async_set_preset_mode(PresetMode.AUTO)
+            # Some heaters (e.g. CX3120) only have AUTO_PLUS.
+            preset = PresetMode.AUTO if PresetMode.AUTO in (self._attr_preset_modes or []) else PresetMode.AUTO_PLUS
+            await self.async_set_preset_mode(preset)
         elif hvac_mode == HVACMode.FAN_ONLY:
             await self.async_set_preset_mode(PresetMode.VENTILATION)
         elif hvac_mode == HVACMode.HEAT:
