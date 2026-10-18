@@ -28,6 +28,7 @@ from .const import (
     SWITCH_OFF,
     SWITCH_ON,
     FanAttributes,
+    PhilipsApi,
     PresetMode,
 )
 from .model import DeviceStatus
@@ -143,7 +144,6 @@ class PhilipsHeater(PhilipsGenericControlBase, ClimateEntity):
         self._attr_min_temp = self._description[FanAttributes.MIN_TEMPERATURE]
         self._attr_max_temp = self._description[FanAttributes.MAX_TEMPERATURE]
         self._attr_target_temperature = latest_status.get(self._temperature_target_key)
-        self._attr_current_temperature = latest_status.get(self._description[FanAttributes.TEMPERATURE])
 
         self._attr_supported_features = (
             ClimateEntityFeature.TARGET_TEMPERATURE
@@ -171,6 +171,16 @@ class PhilipsHeater(PhilipsGenericControlBase, ClimateEntity):
         if value is None:
             return None
         return float(value)
+
+    @property
+    def current_temperature(self) -> float | None:
+        """Return the current temperature from the live device status."""
+        value = self._device_status.get(self._description[FanAttributes.TEMPERATURE])
+        if value is not None:
+            return float(value)
+        # new2 devices (e.g. CX3120) report it in D03224, in tenths of a degree.
+        value = self._device_status.get(PhilipsApi.NEW2_TEMPERATURE)
+        return float(value) / 10 if value is not None else None
 
     @property
     def hvac_action(self) -> HVACAction | None:
